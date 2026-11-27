@@ -16,13 +16,9 @@ lemma OMA.lcm_mul_sub_sum_int (N : ℕ) (A : Finset ℕ) (hA : A ⊆ Icc 1 N) :
     Finset.mul_sum]
   congr 1
   refine Finset.sum_congr rfl fun n hn => ?_
-  have hnI : n ∈ Icc 1 N := hA hn
-  have hn0 : n ≠ 0 := by
-    have := (Finset.mem_Icc.mp hnI).1
-    omega
-  have hdvd : n ∣ L := by
-    have := Finset.dvd_lcm (f := id) hnI
-    simpa [hL] using this
+  have hnI := hA hn
+  have hn0 : n ≠ 0 := Nat.ne_of_gt (Finset.mem_Icc.mp hnI).1
+  have hdvd : n ∣ L := Finset.dvd_lcm (f := id) hnI
   rw [Nat.cast_div hdvd (by exact_mod_cast hn0)]
   ring
 
@@ -41,13 +37,7 @@ theorem OMA.solution : type_of% @Erdos311.delta_ge_inv_lcm := by
     rw [← hL] at hk
     have hk0 : k ≠ 0 := by
       rintro rfl
-      apply hx
-      have : (1 - ∑ n ∈ A, (1 : ℝ) / n) = 0 := by
-        have h' : (L : ℝ) * (1 - ∑ n ∈ A, (1 : ℝ) / n) = 0 := by simpa using hk
-        rcases mul_eq_zero.mp h' with h | h
-        · exact absurd h hLR.ne'
-        · exact h
-      rw [this, abs_zero]
+      exact (mul_ne_zero hLR.ne' (abs_ne_zero.mp hx)) (by simpa only [Int.cast_zero] using hk)
     have hk1 : (1 : ℝ) ≤ |(k : ℝ)| := by
       rw [← Int.cast_abs]
       exact_mod_cast Int.one_le_abs hk0

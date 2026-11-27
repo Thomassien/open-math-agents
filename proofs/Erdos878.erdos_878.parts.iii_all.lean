@@ -16,40 +16,19 @@ open Erdos878
 set_option maxRecDepth 100000 in
 lemma f_le : ∀ n ∈ Finset.range 211, f n ≤ 441 := by decide +kernel
 
+private def witness : Finset ℕ := {128, 189, 125}
+
 lemma F_ge : 442 ≤ F 210 := by
   unfold F
-  refine le_trans ?_ (Finset.le_sup (b := ({128, 189, 125} : Finset ℕ)) ?_)
-  · decide
-  · simp only [Finset.mem_filter, Finset.mem_powerset]
-    refine ⟨by decide, by decide, ?_, ?_⟩
-    · intro a ha b hb hab
-      simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff,
-        Set.mem_singleton_iff] at ha hb
-      rcases ha with rfl | rfl | rfl <;> rcases hb with rfl | rfl | rfl <;>
-        first
-          | exact absurd rfl hab
-          | (show Nat.Coprime _ _; decide)
-    · intro a ha p hp hpa
-      simp only [Finset.mem_insert, Finset.mem_singleton] at ha
-      rcases ha with rfl | rfl | rfl
-      · have h : p ∣ 2 ^ 7 := by norm_num; exact hpa
-        have hp2 : p = 2 := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).1 (hp.dvd_of_dvd_pow h)
-        subst hp2
-        decide
-      · have h : p ∣ 3 ^ 3 * 7 := by norm_num; exact hpa
-        rcases hp.dvd_mul.1 h with h3 | h7
-        · have hp3 : p = 3 :=
-            (Nat.prime_dvd_prime_iff_eq hp Nat.prime_three).1 (hp.dvd_of_dvd_pow h3)
-          subst hp3
-          decide
-        · have hp7 : p = 7 := (Nat.prime_dvd_prime_iff_eq hp (by norm_num)).1 h7
-          subst hp7
-          decide
-      · have h : p ∣ 5 ^ 3 := by norm_num; exact hpa
-        have hp5 : p = 5 :=
-          (Nat.prime_dvd_prime_iff_eq hp Nat.prime_five).1 (hp.dvd_of_dvd_pow h)
-        subst hp5
-        decide
+  refine le_trans (by decide) (Finset.le_sup (b := witness) ?_)
+  simp only [Finset.mem_filter, Finset.mem_powerset]
+  refine ⟨by decide, by decide, ?_, ?_⟩
+  · change ∀ a ∈ witness, ∀ b ∈ witness, a ≠ b → a.Coprime b
+    decide
+  · intro a ha p hp hpa
+    have support : ∀ m ∈ witness, m.primeFactors ⊆ Nat.primeFactors 210 := by decide +kernel
+    have ha0 : a ≠ 0 := fun e => (show 0 ∉ witness by decide) (e ▸ ha)
+    exact Nat.dvd_of_mem_primeFactors (support a ha (Nat.mem_primeFactors.2 ⟨hp, hpa, ha0⟩))
 
 end OMA.E878
 

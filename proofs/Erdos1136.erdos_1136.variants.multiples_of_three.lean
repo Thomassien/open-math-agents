@@ -33,22 +33,23 @@ theorem OMA.solution : type_of% @Erdos1136.erdos_1136.variants.multiples_of_thre
         omega
     simp only [Set.HasDensity, Set.partialDensity, Set.inter_univ, Set.univ_inter,
       hcount, Set.ncard_Iio_nat]
-    have hupper : Tendsto (fun n : ℕ => (1 / 3 : ℝ) + 1 / n) atTop (𝓝 (1 / 3)) := by
-      simpa only [add_zero] using
-        (tendsto_const_nhds.add
-          (tendsto_one_div_atTop_nhds_zero_nat :
-            Tendsto (fun n : ℕ => (1 : ℝ) / n) atTop (𝓝 0)))
-    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hupper ?_ ?_
-    · filter_upwards [eventually_ge_atTop (1 : ℕ)] with n hn
-      have hn' : (0 : ℝ) < n := by exact_mod_cast (by omega : 0 < n)
-      apply (le_div_iff₀ hn').mpr
-      have h : n ≤ ((n + 2) / 3) * 3 := by omega
-      have h' : (n : ℝ) ≤ (((n + 2) / 3 : ℕ) : ℝ) * 3 := by exact_mod_cast h
-      linarith
-    · filter_upwards [eventually_ge_atTop (1 : ℕ)] with n hn
-      have hn' : (0 : ℝ) < n := by exact_mod_cast (by omega : 0 < n)
-      apply (div_le_iff₀ hn').mpr
-      rw [add_mul, div_mul_cancel₀ (1 : ℝ) hn'.ne']
-      have h : ((n + 2) / 3) * 3 ≤ n + 2 := by omega
-      have h' : (((n + 2) / 3 : ℕ) : ℝ) * 3 ≤ (n : ℝ) + 2 := by exact_mod_cast h
-      linarith
+    -- Apply the floor asymptotic at n + 2, then account for the shifted denominator.
+    have hfloor := (tendsto_nat_floor_mul_div_atTop (R := ℝ)
+        (a := 1 / 3) (by norm_num)).comp
+      (tendsto_natCast_atTop_atTop.comp (tendsto_add_atTop_nat 2))
+    have hcorr : Tendsto (fun n : ℕ => (1 : ℝ) + 2 / n) atTop (𝓝 1) := by
+      simpa [div_eq_mul_inv] using tendsto_const_nhds.add
+        (tendsto_one_div_atTop_nhds_zero_nat.const_mul (2 : ℝ))
+    rw [← mul_one (1 / 3 : ℝ)]
+    refine (hfloor.mul hcorr).congr ?_
+    intro n
+    change (⌊(1 / 3 : ℝ) * ((n + 2 : ℕ) : ℝ)⌋₊ : ℝ) / ((n + 2 : ℕ) : ℝ) *
+        (1 + 2 / n) = _
+    rw [one_div_mul_eq_div, show (3 : ℝ) = ((3 : ℕ) : ℝ) by norm_num,
+      Nat.floor_div_natCast, Nat.floor_natCast, Nat.cast_add]
+    by_cases hn : n = 0
+    · simp [hn]
+    · have hn' : (n : ℝ) ≠ 0 := by exact_mod_cast hn
+      have hn2 : (n : ℝ) + 2 ≠ 0 := by positivity
+      field_simp
+      <;> ring
